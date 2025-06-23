@@ -34,4 +34,4 @@ If you would like to contribute, please fork the repository and use a feature br
 
 ## License
 
-This project is open source, under the [MIT License](LICENSE).# Semver
+This project is open source, under the [MIT License](LICENSE).
