@@ -1,3 +1,3 @@
 module github.com/maloquacious/semver
 
-go 1.20
+go 1.21.6

@@ -1,47 +1,89 @@
-// Copyright (c) 2023 Michael D Henderson
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+// Copyright (c) 2025 Michael D Henderson. All rights reserved.
 
-// Package semver implements a struct for semantic versioning.
+// Package semver implements semantic versioning.
 package semver
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+)
 
-// Version holds information on the version
+// Version is the major/minor/patch of the application.
 type Version struct {
-	Major         int
-	Minor         int
-	Patch         int
-	PreRelease    string
-	BuildMetaData string
+	Major      int
+	Minor      int
+	Patch      int
+	PreRelease string
+	Build      string
 }
 
 // String implements the Stringer interface.
+// The version string is formatted per https://semver.org/ rules
 func (v Version) String() string {
-	preRelease := v.PreRelease != ""
-	buildMetaData := v.BuildMetaData != ""
-	if preRelease && buildMetaData {
-		return fmt.Sprintf("%d.%d.%d-%s+%s", v.Major, v.Minor, v.Patch, v.PreRelease, v.BuildMetaData)
-	} else if preRelease {
+	hasPreRelease, hasBuild := v.PreRelease != "", v.Build != ""
+	if hasPreRelease && hasBuild {
+		return fmt.Sprintf("%d.%d.%d-%s+%s", v.Major, v.Minor, v.Patch, v.PreRelease, v.Build)
+	} else if hasPreRelease && !hasBuild {
 		return fmt.Sprintf("%d.%d.%d-%s", v.Major, v.Minor, v.Patch, v.PreRelease)
-	} else if buildMetaData {
-		return fmt.Sprintf("%d.%d.%d+%s", v.Major, v.Minor, v.Patch, v.BuildMetaData)
+	} else if !hasPreRelease && hasBuild {
+		return fmt.Sprintf("%d.%d.%d+%s", v.Major, v.Minor, v.Patch, v.Build)
 	}
 	return fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch)
+}
+
+// Equal checks if the given version is identical to the current version
+func (v Version) Equal(v2 Version) bool {
+	return v.Major == v2.Major && v.Minor == v2.Minor && v.Patch == v2.Patch && v.PreRelease == v2.PreRelease && v.Build == v2.Build
+}
+
+// Less is a helper function to compare versions per https://semver.org/#spec-item-11.
+// Example: 1.0.0-alpha < 1.0.0-alpha.1 < 1.0.0-alpha.beta < 1.0.0-beta < 1.0.0-beta.2 < 1.0.0-beta.11 < 1.0.0-rc.1 < 1.0.0.
+func (v Version) Less(v2 Version) bool {
+	// are they identical?
+	if v.Equal(v2) {
+		return false
+	}
+	// they are not identical, so compare major first
+	if v.Major < v2.Major {
+		return true
+	} else if v.Major > v2.Major {
+		return false
+	}
+	// major is equal, so compare minor
+	if v.Minor < v2.Minor {
+		return true
+	} else if v.Minor > v2.Minor {
+		return false
+	}
+	// major and minor are equal, so compare patch
+	if v.Patch < v2.Patch {
+		return true
+	} else if v.Patch > v2.Patch {
+		return false
+	}
+	// major, minor, patch are equal, so compare pre-release.
+	fields1 := strings.Split(v.PreRelease, ".")
+	fields2 := strings.Split(v2.PreRelease, ".")
+	for i := 0; i < len(fields1) && i < len(fields2); i++ {
+		n1, err1 := strconv.Atoi(fields1[i])
+		n2, err2 := strconv.Atoi(fields2[i])
+		if err1 == nil && err2 == nil { // both fields are int
+			if n1 < n2 {
+				return true
+			} else if n1 > n2 {
+				return false
+			}
+			// n1 and n2 are equal, so compare the next field
+		} else if err1 == nil { // only field1 is an int
+			return true
+		} else if err2 == nil { // only field2 is an int
+			return false
+		} else if fields1[i] < fields2[i] { // compare as text
+			return true
+		} else if fields1[i] > fields2[i] { // compare as text
+			return false
+		}
+	}
+	return len(fields1) >= len(fields2)
 }
