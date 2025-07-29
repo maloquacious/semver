@@ -4,8 +4,10 @@
 package semver_test
 
 import (
-	"github.com/maloquacious/semver"
+	"sort"
 	"testing"
+
+	"github.com/maloquacious/semver"
 )
 
 // Test for String method
@@ -322,6 +324,114 @@ func TestCore(t *testing.T) {
 			actual := tc.version.Core()
 			if actual != tc.expected {
 				t.Errorf("Unexpected version string. expected: %v, actual: %v", tc.expected, actual)
+			}
+		})
+	}
+}
+
+// Test for ByVersion sorting
+func TestByVersion(t *testing.T) {
+	testCases := []struct {
+		desc     string
+		input    []semver.Version
+		expected []semver.Version
+	}{
+		{
+			desc: "basic version sorting",
+			input: []semver.Version{
+				{Major: 1, Minor: 0, Patch: 1},
+				{Major: 1, Minor: 0, Patch: 0},
+				{Major: 2, Minor: 0, Patch: 0},
+			},
+			expected: []semver.Version{
+				{Major: 1, Minor: 0, Patch: 0},
+				{Major: 1, Minor: 0, Patch: 1},
+				{Major: 2, Minor: 0, Patch: 0},
+			},
+		},
+		{
+			desc: "prerelease and normal version sorting",
+			input: []semver.Version{
+				{Major: 1, Minor: 0, Patch: 0},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "beta"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "alpha"},
+			},
+			expected: []semver.Version{
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "alpha"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "beta"},
+				{Major: 1, Minor: 0, Patch: 0},
+			},
+		},
+		{
+			desc: "complex semver example from spec",
+			input: []semver.Version{
+				{Major: 1, Minor: 0, Patch: 0},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "beta.11"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "alpha.1"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "rc.1"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "alpha"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "beta.2"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "alpha.beta"},
+			},
+			expected: []semver.Version{
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "alpha"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "alpha.1"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "alpha.beta"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "beta.2"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "beta.11"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "rc.1"},
+				{Major: 1, Minor: 0, Patch: 0},
+			},
+		},
+		{
+			desc: "build metadata ignored in sorting",
+			input: []semver.Version{
+				{Major: 1, Minor: 0, Patch: 0, Build: "build2"},
+				{Major: 1, Minor: 0, Patch: 0, Build: "build1"},
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "alpha", Build: "build3"},
+			},
+			expected: []semver.Version{
+				{Major: 1, Minor: 0, Patch: 0, PreRelease: "alpha", Build: "build3"},
+				{Major: 1, Minor: 0, Patch: 0, Build: "build2"},
+				{Major: 1, Minor: 0, Patch: 0, Build: "build1"},
+			},
+		},
+		{
+			desc: "empty slice",
+			input: []semver.Version{},
+			expected: []semver.Version{},
+		},
+		{
+			desc: "single version",
+			input: []semver.Version{
+				{Major: 1, Minor: 0, Patch: 0},
+			},
+			expected: []semver.Version{
+				{Major: 1, Minor: 0, Patch: 0},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			// Make a copy to avoid modifying the test data
+			versions := make([]semver.Version, len(tc.input))
+			copy(versions, tc.input)
+			
+			// Sort using ByVersion
+			sort.Sort(semver.ByVersion(versions))
+			
+			// Check that lengths match
+			if len(versions) != len(tc.expected) {
+				t.Fatalf("Length mismatch. expected: %d, actual: %d", len(tc.expected), len(versions))
+			}
+			
+			// Check each version
+			for i, expected := range tc.expected {
+				if !versions[i].Equal(expected) {
+					t.Errorf("Version at index %d mismatch. expected: %s, actual: %s", 
+						i, expected.String(), versions[i].String())
+				}
 			}
 		})
 	}

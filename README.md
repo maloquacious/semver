@@ -54,7 +54,7 @@ You can get the version of the semver package itself:
 
 ```go
 fmt.Printf("Using semver package version: %s\n", semver.Current().String())
-// Output: "Using semver package version: 0.2.0+abc1234"
+// Output: "Using semver package version: 0.3.0+abc1234"
 ```
 
 ### Sorting Versions
@@ -74,6 +74,19 @@ sort.Slice(versions, func(i, j int) bool {
 })
 
 // Result: [0.9.0, 1.0.0-alpha, 1.0.0-beta, 1.0.0]
+```
+
+You can also use the `ByVersion` type with the standard `sort.Interface`:
+
+```go
+versions := []semver.Version{
+    {Major: 1, Minor: 0, Patch: 0, PreRelease: "beta"},
+    {Major: 1, Minor: 0, Patch: 0},
+    {Major: 1, Minor: 0, Patch: 0, PreRelease: "alpha"},
+}
+
+sort.Sort(semver.ByVersion(versions))
+// Result: [1.0.0-alpha, 1.0.0-beta, 1.0.0]
 ```
 
 ### String Formatting

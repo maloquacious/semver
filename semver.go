@@ -77,6 +77,31 @@ func (v Version) Core() string {
 	return fmt.Sprintf("%d.%d.%d", v.Major, v.Minor, v.Patch)
 }
 
+// ByVersion implements sort.Interface for []Version based on semantic version precedence.
+// This allows sorting slices of versions using the standard sort package.
+//
+// Example usage:
+//   versions := []Version{{1, 0, 0, "beta", ""}, {1, 0, 0, "", ""}, {1, 0, 0, "alpha", ""}}
+//   sort.Sort(ByVersion(versions))
+//   // Result: versions are now sorted as [1.0.0-alpha, 1.0.0-beta, 1.0.0]
+type ByVersion []Version
+
+// Len returns the number of versions in the slice.
+func (v ByVersion) Len() int {
+	return len(v)
+}
+
+// Less reports whether the version at index i should sort before the version at index j.
+// It uses the Compare method to determine semantic version precedence.
+func (v ByVersion) Less(i, j int) bool {
+	return v[i].Compare(v[j]) < 0
+}
+
+// Swap swaps the versions at indices i and j.
+func (v ByVersion) Swap(i, j int) {
+	v[i], v[j] = v[j], v[i]
+}
+
 // Equal returns true if this version is identical to v2 in all components.
 // This includes major, minor, patch, pre-release, and build metadata.
 // Note: Two versions that differ only in build metadata are considered different

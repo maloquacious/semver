@@ -9,6 +9,7 @@
 - [x] **IsZero() Method** - Basic version 0.0.0 detection
 - [x] **Architecture Improvement** - Single source of truth for comparison logic
 - [x] **String Formatting** - Added Short() and Core() methods for flexible version display
+- [x] **ByVersion Sorting** - Implemented sort.Interface for standard Go sorting patterns
 
 ## High Priority - API Completeness
 
@@ -53,8 +54,8 @@
 - [ ] Constraint syntax: `^1.2.3`, `~1.2.3`, `>=1.0.0 <2.0.0`
 
 ### Sorting Integration
-- [ ] `ByVersion` type for sorting slices of versions
-- [x] Example usage in documentation ✅ (Compare() examples in README)
+- [x] `ByVersion` type for sorting slices of versions ✅
+- [x] Example usage in documentation ✅ (Compare() and ByVersion examples in README)
 
 ## Low Priority - Enhanced Features
 

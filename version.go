@@ -6,7 +6,7 @@ package semver
 func Current() Version {
 	return Version{
 		Major:      0,
-		Minor:      2,
+		Minor:      3,
 		Patch:      0,
 		PreRelease: "",
 		Build:      Commit(),
